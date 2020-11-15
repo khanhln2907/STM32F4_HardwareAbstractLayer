@@ -1,5 +1,6 @@
 #include "stm32f429xx.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct{
 	//GPIO_TypeDef *port;
@@ -9,7 +10,7 @@ typedef struct{
 	uint32_t outputType; // Input or Output
 	uint32_t outputSpeed;
 	uint32_t useAF;
-}GPIO_Config;
+}GPIO_GeneralConfig;
 
 typedef enum {
 	INPUT = 0x00,
@@ -41,42 +42,56 @@ typedef enum {
 #define HAL_GPIO_OK 1
 #define HAL_GPIO_PORT_UNDEFINED 2
 #define HAL_GPIO_PORT_MODE_UNDEFINED 3 
+#define HAL_GPIO_PIN_UNDEFINED 4 
+#define HAL_GPIO_INTERRUPT_TRIGGER_UNDEFINED 5 
 
-// MACRO FOR PINNUMBER
+
+// MACRO FOR PINNUMBER AND LEVEL
 #define HAL_GPIO_PIN_POS(x) 0x01 << x
-#define HAL_GPIO_STATE_HIGH 0x01
-#define HIGH HAL_GPIO_STATE_HIGH
+#define GPIO_PIN(x) HAL_GPIO_PIN_POS(x) 
 
 #define HAL_GPIO_PIN_SET_POS(x) HAL_GPIO_PIN_POS(x)
-#define HAL_GPIO_STATE_LOW 0x00
-#define LOW HAL_GPIO_STATE_LOW
 #define HAL_GPIO_PIN_RESET_POS(x) 0x01 << (x + 16)
 
+#define HAL_GPIO_STATE_HIGH 0x01
+#define HIGH 	HAL_GPIO_STATE_HIGH
+#define HAL_GPIO_STATE_LOW 0x00
+#define LOW 	HAL_GPIO_STATE_LOW
 
 // Public Function ********************************************************
-// Init any specific GPIO, same function, set all pin by using pinMask
-// ...
-int GPIO_init(GPIO_TypeDef *port, GPIO_Config pinConfig);
- 
- 
+// Init any specific GPIO, same function, set the common pin by according to pinMask
+int GPIO_setupPort(GPIO_TypeDef *port, GPIO_GeneralConfig pinConfig);
+
+/// Function for set and reset pin 
 void GPIO_digitalWrite(GPIO_TypeDef *port, uint32_t pinNumber, bool level);
 void GPIO_pinToggle(GPIO_TypeDef *port, uint32_t pinNumber);
-bool GPIO_readOutput(GPIO_TypeDef *port, uint32_t pinNumber);
+bool GPIO_getOutputState(GPIO_TypeDef *port, uint32_t pinNumber);
+
+// Interrupt
+typedef enum {
+	GPIO_EXTI_TRIGGER_RISING = 0x0,
+	GPIO_EXTI_TRIGGER_FALLING = 0x1,
+	GPIO_EXTI_TRIGGER_BOTH = 0x2,
+} GPIO_triggerSelection;
 
 
-int GPIO_setupPin(GPIO_TypeDef *port, uint32_t pinNumber, GPIO_Config portConfig);
+typedef struct {
+	uint32_t pinNumber;
+	GPIO_triggerSelection trigger;
+	bool isSoftwareIntEvt;
+}GPIO_InterruptConfig;
 
+/// Used to setup interrupt for pin only 
+/// Interrupt lines 0 -> 15
+void GPIO_setupInterruptPin(GPIO_TypeDef *port, GPIO_InterruptConfig myPinConfig);
 
-// General
-void GPIO_setMode(GPIO_TypeDef* port, uint32_t pinNumber, GPIO_portMode mode);
-//void GPIO_setModeWithPUPD(GPIO_TypeDef* port, uint32_t pinNumber, GPIO_portMode mode, GPIO_PUPD pull);
+void GPIO_enableInterruptPin(uint32_t pinNumber, IRQn_Type irqNumber);
+void GPIO_clearInterruptPin(uint32_t pinNumber);
 
-// Output: Type, Speed
-void GPIO_configOutput(GPIO_TypeDef* port, uint32_t pinNumber, GPIO_outputType oType, GPIO_ouputSpeed oSpeed);
-
-
-
-
+// Private
+/// Setup a single pin
+/// portConfig.pinMask: ignored
+int _GPIO_initPin(GPIO_TypeDef *port, uint32_t pinNumber, GPIO_GeneralConfig pinConfig);
 
 
 
