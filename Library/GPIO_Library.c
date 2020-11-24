@@ -1,9 +1,9 @@
-#include "HAL_GPIO.h"
+#include "GPIO_Library.h"
 #include <assert.h>
 
-
+// Genral Purpose *********************************************************************************
 int GPIO_setupPort(GPIO_TypeDef *port, GPIO_GeneralConfig pinConfig){
-	// Clock Init
+	// Initialize clock for GPIO
 	if(port == GPIOA){
 			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	} else if (port == GPIOB) {
@@ -29,7 +29,7 @@ int GPIO_setupPort(GPIO_TypeDef *port, GPIO_GeneralConfig pinConfig){
 	} else 
 	{
 			// Error or execption handling
-			assert(HAL_GPIO_PORT_UNDEFINED);
+			assert(!HAL_GPIO_PORT_UNDEFINED);
 			return HAL_GPIO_PORT_UNDEFINED;
 	}
 	
@@ -80,58 +80,106 @@ void GPIO_pinToggle(GPIO_TypeDef *port, uint32_t pinNumber){
 //  __IO uint32_t LCKR;     /*!< GPIO port configuration lock register, Address offset: 0x1C      */
 //  __IO uint32_t AFR[2];   /*!< GPIO alternate function registers,     Address offset: 0x20-0x24 */
 int _GPIO_initPin(GPIO_TypeDef *port, uint32_t pinNumber, GPIO_GeneralConfig pinConfig){
-
 	// Setup Mode
 	//GPIO_setMode(port, pinNumber, portConfig.modeIO);
-	port->MODER |= (pinConfig.modeIO << (pinNumber * 2)); // 2 bit for each pin
+	//port->MODER |= (pinConfig.mode << (pinNumber * 2)); // 2 bit for each pin
+	switch(pinConfig.mode){
+		case INPUT: // 0b00
+			port->MODER &= ~(0b11 < (pinNumber * 2));
+			break;
+		case OUTPUT: // 0b01
+			port->MODER &= ~(1U << (pinNumber * 2 + 1));
+			port->MODER |= (1U << (pinNumber * 2));
+			break;
+		case ALTERNATE_FUNCTION: // 0b10
+			// Set up pin into Alternate Function mode
+			port->MODER &= ~(1U << (pinNumber * 2));
+			port->MODER |= (1U << (pinNumber * 2 + 1));
+		
+			// Select AF 
+			if(pinNumber < 8){ // AFRL == AFR[0]
+				port->AFR[0] &= ~(0xF << (pinNumber * 4)); // Clear AF Mask of a specific pin
+				port->AFR[0] |= pinConfig.AFSelect << ((pinNumber * 4)); // Set bit
+			}
+			else{ // AFRL == AFR[1]
+				uint8_t scaledOffset = pinNumber - 8;
+				port->AFR[1] &= ~(0xF << (scaledOffset * 4)); // Clear bit
+				port->AFR[1] |= pinConfig.AFSelect << (scaledOffset * 4); // Set bit
+			}
+			
+			break;
+		case ANALOG: // 0b11
+			port->MODER |= (0b11 << (pinNumber * 2));
+			break;
+		default:
+			assert(!HAL_GPIO_PORT_MODE_UNDEFINED);
+			return HAL_GPIO_PORT_MODE_UNDEFINED;		
+	}
 	
 	// Setup Pull
-	port->PUPDR |= (pinConfig.pull << (pinNumber * 2));
-	
-	// Setup mode for each pin
-	port->MODER |= (pinConfig.modeIO << (pinNumber * 2)); // 2 bit for each pin
-	// Setup according to GPIO function
-	switch(pinConfig.modeIO){
-		case INPUT:
-		{
-			// Do something
+	switch(pinConfig.pull){
+		case GPIO_PULL_NONE: // 0b00
+			port->PUPDR &= ~(0b11 < (pinNumber * 2));
 			break;
-		}
-		case OUTPUT: // Setup speed and output type
-		{
-			// Setup output type
-			port->OTYPER |= (pinConfig.outputType << (pinNumber)); 
-			// Setup output speed
-			port->OSPEEDR |= (pinConfig.outputSpeed << (pinNumber * 2)); // 2 bit for each pin
-			// Do something 
+		case GPIO_PULL_UP: // 0b01
+			port->PUPDR &= ~(1U << (pinNumber * 2 + 1));
+			port->PUPDR |= (1U << (pinNumber * 2));
 			break;
-		}
-		case ALTERNATE_FUNCTION:
-		{
-			// Do something
+		case GPIO_PULL_DOWN: // 0b10
+			port->PUPDR &= ~(1U << (pinNumber * 2));
+			port->PUPDR |= (1U << (pinNumber * 2 + 1));
 			break;
-		}
-		case ANALOG:
-		{
-			// Do something
-			break;
-		}
 		default:
-		{
-			assert(HAL_GPIO_PORT_MODE_UNDEFINED);
-			return HAL_GPIO_PORT_MODE_UNDEFINED;
+			assert(!HAL_GPIO_PORT_PULL_UNDEFINED);
+			return HAL_GPIO_PORT_PULL_UNDEFINED;		
+	}
+	
+	// Setup output Type and Speed
+	if(pinConfig.mode != INPUT){	
+		switch(pinConfig.outputType){
+			case GPIO_OTYPE_PUSHPULL: // 0b0
+				port->OTYPER &= ~(0b1 << pinNumber);
+				break;
+			case GPIO_OTYPE_OPENDRAIN: // 0b1
+				port->OTYPER |= (0b1 << pinNumber);
+				break;
+			default:
+				assert(!HAL_GPIO_OTYPE_UNDEFINED);
+				return HAL_GPIO_OTYPE_UNDEFINED;		
+		}
+		
+		switch(pinConfig.outputSpeed){
+			case GPIO_OSPEED_LOW: // 0b00
+				port->OSPEEDR &= ~(0b11 < (pinNumber * 2));
+				break;
+			case GPIO_OSPEED_MED: // 0b01
+				port->OSPEEDR &= ~(1U << (pinNumber * 2 + 1));
+				port->OSPEEDR |= (1U << (pinNumber * 2));
+				break;
+			case GPIO_OSPEED_HIGH: // 0b10
+				port->OSPEEDR &= ~(1U << (pinNumber * 2));
+				port->OSPEEDR |= (1U << (pinNumber * 2 + 1));
+				break;
+			case GPIO_OSPEED_VERY_HIGH: // 0b11
+				port->OSPEEDR |= (0b11 << (pinNumber * 2));
+				break;
+			default:
+				assert(!HAL_GPIO_OSPEED_UNDEFINED);
+				return HAL_GPIO_OSPEED_UNDEFINED;
 		}
 	}
+	// OK to go
 	return HAL_GPIO_OK;
 }
 
 
-// Interrupt and Events Functions
+
+// Interrupt and Events Functions ******************************************************************
 void GPIO_setupInterruptPin(GPIO_TypeDef *port, GPIO_InterruptConfig myPinConfig){
 	// Enable clock
 	RCC->AHB2ENR |= RCC_APB2ENR_SYSCFGEN;
 	
-	// Setup GPIO SOurce for Interrupt and Event
+	// Setup GPIO Source for Interrupt and Event
 	if(port == GPIOA){
 		switch(myPinConfig.pinNumber){
 			case 0:
@@ -717,11 +765,9 @@ void GPIO_setupInterruptPin(GPIO_TypeDef *port, GPIO_InterruptConfig myPinConfig
 		assert(HAL_GPIO_PORT_UNDEFINED);
 	}
 	
+	
 	// Setup interrupt/event parameter and style
-	// Setup Masked
-	//EXTI->IMR |= HAL_GPIO_PIN_POS(myPinConfig.pinNumber);
-
-	// Is Software triggered ?
+	// Is it triggered by software ?
 	if(myPinConfig.isSoftwareIntEvt){
 		EXTI->SWIER |= HAL_GPIO_PIN_POS(myPinConfig.pinNumber);
 	}
@@ -752,10 +798,10 @@ void GPIO_enableInterruptPin(uint32_t pinNumber, IRQn_Type irqNumber){
 	NVIC_EnableIRQ(irqNumber);
 }
 
+// This function must be called whenever the interrupt is triggered
 void GPIO_clearInterruptPin(uint32_t pinNumber){
 	EXTI->PR |= HAL_GPIO_PIN_POS(pinNumber);
 }
-
 
 
 

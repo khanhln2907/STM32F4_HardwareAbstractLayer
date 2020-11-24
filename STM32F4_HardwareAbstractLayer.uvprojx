@@ -383,9 +383,19 @@
           <GroupName>Library Header</GroupName>
           <Files>
             <File>
-              <FileName>HAL_GPIO.h</FileName>
+              <FileName>UART_Library.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Library\HAL_GPIO.h</FilePath>
+              <FilePath>.\Library\UART_Library.h</FilePath>
+            </File>
+            <File>
+              <FileName>GPIO_Library.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\GPIO_Library.h</FilePath>
+            </File>
+            <File>
+              <FileName>TIM_Library.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\TIM_Library.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -393,9 +403,19 @@
           <GroupName>Library Source</GroupName>
           <Files>
             <File>
-              <FileName>HAL_GPIO.c</FileName>
+              <FileName>GPIO_Library.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Library\HAL_GPIO.c</FilePath>
+              <FilePath>.\Library\GPIO_Library.c</FilePath>
+            </File>
+            <File>
+              <FileName>UART_Library.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\UART_Library.c</FilePath>
+            </File>
+            <File>
+              <FileName>TIM_Library.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\TIM_Library.c</FilePath>
             </File>
           </Files>
         </Group>
