@@ -1,5 +1,6 @@
 #include "UART_Library.h"
 #include "GPIO_Library.h"
+
 #include <assert.h>
 
 // For boolean
@@ -12,6 +13,7 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
+#define UART_OK 1
 
 #define UART_ERROR 100
 #define UART_PORT_ERROR UART_ERROR + 1
@@ -136,6 +138,8 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 	// 4. Enable Transmitter / Receiver
 	uartPort->CR1 |= USART_CR1_TE;
 	uartPort->CR1 |= USART_CR1_RE;
+	
+	return UART_OK;
 }
 
 // Write 1 Byte through Serial Port

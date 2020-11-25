@@ -1,6 +1,8 @@
 #include "../Library/GPIO_Library.h"
 #include "../Library/UART_Library.h"
 #include "../Library/TIM_Library.h"
+#include "../Library/I2C_Library.h"
+
 
 // SystemCoreClock = ((INPUT_CLOCK (HSE_OR_HSI_IN_HZ) / PLL_M) * PLL_N) / PLL_P
 // 180 Hz: PLL_N = 360, PLL_P = 2, PLL_M = 8

@@ -48,8 +48,19 @@ int main(){
 	UART_begin(USART2, brr9600APB1);
 	UART_begin(USART3, brr9600APB1);
 	
+	// I2C
+	I2C_Config(I2C1);
+	I2C_Config(I2C3);
+
+	uint8_t slaveAddress = 0x4E;
+	uint8_t i2cTXBuffer[1] = {0b10101010};
+	unsigned int i2cTXLen = (unsigned int) strlen(i2cTXBuffer);
+	
 	// Loop
 	while(1){
+		//I2C_transmit(I2C1, slaveAddress, i2cTXBuffer, i2cTXLen);
+		I2C_transmit(I2C3, slaveAddress, i2cTXBuffer, i2cTXLen);
+
 		GPIO_pinToggle(GPIOG, 13);
 		//printMsg("Hello World !");
 //		UART_writeString(USART1, "Hello USART 1! ");
@@ -59,7 +70,7 @@ int main(){
 		uint8_t byteRead = UART_readByte(USART6);
 		if(byteRead != 0)
 			UART_writeByte(USART6, byteRead);
-		delay_ms(1000);
+		delay_ms(20);
 	}
 }
 

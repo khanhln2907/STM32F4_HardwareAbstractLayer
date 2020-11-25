@@ -12,5 +12,8 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister);
 void UART_writeByte(USART_TypeDef* uartPort, uint8_t txByte);
 void UART_writeString(USART_TypeDef* uartPort, char *msg, ...);
 uint8_t UART_readByte(USART_TypeDef* uartPort);
+
+
+
 #endif
 
