@@ -52,11 +52,13 @@ int main(){
 	while(1){
 		GPIO_pinToggle(GPIOG, 13);
 		//printMsg("Hello World !");
-		UART_writeString(USART1, "Hello USART 1! ");
-		UART_writeString(USART2, "Hello USART 2! ");
-		UART_writeString(USART3, "Hello USART 3! ");
-		UART_writeString(USART6, "Hello USART 6! ");
-
+//		UART_writeString(USART1, "Hello USART 1! ");
+//		UART_writeString(USART2, "Hello USART 2! ");
+//		UART_writeString(USART3, "Hello USART 3! ");
+//		UART_writeString(USART6, "Hello USART 6! ");
+		uint8_t byteRead = UART_readByte(USART6);
+		if(byteRead != 0)
+			UART_writeByte(USART6, byteRead);
 		delay_ms(1000);
 	}
 }

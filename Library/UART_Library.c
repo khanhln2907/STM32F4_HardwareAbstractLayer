@@ -41,7 +41,7 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 		// Init GPIOA2: TX - GPIOA3: RX
 		port = GPIOA;
 		GPIO_GeneralConfig configGPIOA;
-		configGPIOA.pinMask = GPIO_PIN(2); // | GPIO_PIN(3);
+		configGPIOA.pinMask = GPIO_PIN(2) | GPIO_PIN(3);
 		configGPIOA.mode = ALTERNATE_FUNCTION;
 		configGPIOA.AFSelect = 7;
 		configGPIOA.outputSpeed = GPIO_OSPEED_HIGH;
@@ -54,7 +54,7 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 		// Init GPIOB10: TX, Remap -> GPIOD8: TX - GPIOD9: RX
 		port = GPIOB;
 		GPIO_GeneralConfig configGPIOB;
-		configGPIOB.pinMask = GPIO_PIN(10); //| GPIO_PIN(11);
+		configGPIOB.pinMask = GPIO_PIN(10) | GPIO_PIN(11);
 		configGPIOB.mode = ALTERNATE_FUNCTION;
 		configGPIOB.AFSelect = 7;
 		configGPIOB.outputSpeed = GPIO_OSPEED_VERY_HIGH;
@@ -71,7 +71,7 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 		// Init GPIOC6: TX - GPIOC7: RX, Remap -> GPIOD8: TX - GPIOD9: RX
 		port = GPIOC;
 		GPIO_GeneralConfig configGPIOC;
-		configGPIOC.pinMask = GPIO_PIN(6); 
+		configGPIOC.pinMask = GPIO_PIN(6) | GPIO_PIN(7); 
 		configGPIOC.mode = ALTERNATE_FUNCTION;
 		configGPIOC.AFSelect = 8;
 		configGPIOC.outputSpeed = GPIO_OSPEED_VERY_HIGH;
@@ -135,6 +135,7 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 	
 	// 4. Enable Transmitter / Receiver
 	uartPort->CR1 |= USART_CR1_TE;
+	uartPort->CR1 |= USART_CR1_RE;
 }
 
 // Write 1 Byte through Serial Port
@@ -155,7 +156,24 @@ void UART_writeString(USART_TypeDef* uartPort, char *msg, ...){
 	
 	for (int i = 0; i< strlen(txMsg); i++){
 		uartPort->DR = txMsg[i];
-		while(!(uartPort->SR & USART_SR_TC));
+		while(!(uartPort->SR & USART_SR_TC)); // TC or TXE ?
+	}
+}
+
+// Blocking method to get 1 Byte from UART_RX. Temporary
+uint8_t UART_readByte(USART_TypeDef* uartPort){
+//	// 1. Wait for RXNE bit to be set
+//	while(!(uartPort->SR & USART_SR_RXNE)){
+//		//UART_writeString(uartPort, "Waiting");
+//	}
+//	char rxByte = uartPort->DR;
+//		return rxByte;
+	
+	if(!(uartPort->SR & USART_SR_RXNE))
+		return 0; // Nothing to read
+	else{
+		uint8_t rxByte = uartPort->DR;
+		return rxByte;
 	}
 }
 
