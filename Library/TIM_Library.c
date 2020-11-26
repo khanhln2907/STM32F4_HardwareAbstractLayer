@@ -13,20 +13,17 @@
 void TIM4Config(void){
 	// Output PWM: GPIO_PD12 **************************************************
 	// Here we are using Timer so we need to init clock for timer
-	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;//| RCC_AHB1ENR_GPIODEN; 
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+	GPIO_GeneralConfig configGPIOD;
+	configGPIOD.pinMask = GPIO_PIN(12);
+	configGPIOD.mode = ALTERNATE_FUNCTION;
+	configGPIOD.AFSelect = 2;
+	configGPIOD.outputSpeed = GPIO_OSPEED_VERY_HIGH;
+	configGPIOD.outputType = GPIO_OTYPE_PUSHPULL;
+	GPIO_setupPort(GPIOD, configGPIOD);
 	
-	// Setoutput port GPIODA as AF
-	GPIOD->MODER |= (1 << (12 * 2 + 1)); // 2 bit for each pin
-	GPIOD->MODER &= ~(1 << (12 * 2)); // 2 bit for each pin
-	
-	GPIOD->OTYPER |= (1 << 12); // Pushpull
-	GPIOD->OSPEEDR |= (GPIO_OSPEED_VERY_HIGH << (12 * 2)); // 2 bit for each pin
-	
-	GPIOD->AFR[1] |= GPIO_AFRH_AFSEL12_1;
-	GPIOD->AFR[1] &= ~(GPIO_AFRH_AFSEL12_0 | GPIO_AFRH_AFSEL12_2 | GPIO_AFRH_AFSEL12_3);
-
 	// Enable Timer 4  GPIO_PD12 **********************************************
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;//| RCC_AHB1ENR_GPIODEN; 
+
 	// Disabled update for configuration
 	TIM4->CR1 |= TIM_CR1_UDIS;
 	// Setup Timer
@@ -43,16 +40,16 @@ void TIM4Config(void){
 	
 	// Timer paramter
 	TIM4->PSC = 89;
-	//TIM4->CR1 &= ~TIM_CR1_UDIS; // Enable update
 	TIM4->ARR = 1000;
-	TIM4->CCR1 = 200; // Duty: counter compared register
+	TIM4->CCR1 = 250; // Duty: counter compared register
 
 	// Start Timer
 	TIM4->EGR |= TIM_EGR_UG; // Update generation: reinit counter
 	TIM4->EGR |= TIM_EGR_CC1G; // 
 	
+	TIM4->CR1 &= ~TIM_CR1_UDIS; // Enable update
 	TIM4->CR1 |= TIM_CR1_CEN; // Start Timer
-	//while(!(TIM4->SR & (1 << 0)));
+	while(!(TIM4->SR & (1 << 0)));
 }
 
 

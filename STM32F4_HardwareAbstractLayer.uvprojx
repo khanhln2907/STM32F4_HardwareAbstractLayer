@@ -402,6 +402,11 @@
               <FileType>5</FileType>
               <FilePath>.\Library\I2C_Library.h</FilePath>
             </File>
+            <File>
+              <FileName>ADC_Library.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\ADC_Library.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -426,6 +431,11 @@
               <FileName>I2C_Library.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Library\I2C_Library.c</FilePath>
+            </File>
+            <File>
+              <FileName>ADC_Library.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\ADC_Library.c</FilePath>
             </File>
           </Files>
         </Group>

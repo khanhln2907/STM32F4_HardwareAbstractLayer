@@ -31,6 +31,7 @@ int I2C_Config(I2C_TypeDef* i2cPort){
 		configGPIOB.pinMask = GPIO_PIN(6) | GPIO_PIN(7);
 		configGPIOB.mode = ALTERNATE_FUNCTION;
 		configGPIOB.AFSelect = 4;
+		configGPIOB.pull = GPIO_PULL_UP;
 		configGPIOB.outputSpeed = GPIO_OSPEED_HIGH;
 		configGPIOB.outputType = GPIO_OTYPE_OPENDRAIN;
 		GPIO_setupPort(GPIOB, configGPIOB);
@@ -46,6 +47,7 @@ int I2C_Config(I2C_TypeDef* i2cPort){
 		configGPIOF.pinMask = GPIO_PIN(1) | GPIO_PIN(0);
 		configGPIOF.mode = ALTERNATE_FUNCTION;
 		configGPIOF.AFSelect = 4;
+		configGPIOF.pull = GPIO_PULL_UP;
 		configGPIOF.outputSpeed = GPIO_OSPEED_HIGH;
 		configGPIOF.outputType = GPIO_OTYPE_OPENDRAIN;
 		GPIO_setupPort(GPIOF, configGPIOF);
@@ -63,6 +65,7 @@ int I2C_Config(I2C_TypeDef* i2cPort){
 		configGPIOA.pinMask = GPIO_PIN(8);
 		configGPIOA.mode = ALTERNATE_FUNCTION;
 		configGPIOA.AFSelect = 4;
+		configGPIOA.pull = GPIO_PULL_UP;
 		configGPIOA.outputSpeed = GPIO_OSPEED_HIGH;
 		configGPIOA.outputType = GPIO_OTYPE_OPENDRAIN;
 		GPIO_setupPort(GPIOA, configGPIOA);
@@ -72,6 +75,7 @@ int I2C_Config(I2C_TypeDef* i2cPort){
 		configGPIOC.pinMask = GPIO_PIN(9);
 		configGPIOC.mode = ALTERNATE_FUNCTION;
 		configGPIOC.AFSelect = 4;
+		configGPIOC.pull = GPIO_PULL_UP;
 		configGPIOC.outputSpeed = GPIO_OSPEED_HIGH;
 		configGPIOC.outputType = GPIO_OTYPE_OPENDRAIN;
 		GPIO_setupPort(GPIOC, configGPIOC);
@@ -100,7 +104,7 @@ int I2C_Config(I2C_TypeDef* i2cPort){
 	return I2C_OK;
 }
 
-void I2C_transmit(I2C_TypeDef* i2cPort, uint8_t rxAddress, uint8_t* txMsg, uint8_t txLen){
+void I2C_transmit(I2C_TypeDef* i2cPort, uint8_t rxAddress, const uint8_t* txMsg, uint8_t txLen){
 	// Start
 	_I2C_sendStart(i2cPort);
 	// Adress
@@ -115,11 +119,66 @@ void I2C_transmit(I2C_TypeDef* i2cPort, uint8_t rxAddress, uint8_t* txMsg, uint8
 	_I2C_sendStop(i2cPort);	
 }
 
+/*
+The master sends a NACK for the last byte received from the slave. After receiving this
+NACK, the slave releases the control of the SCL and SDA lines. Then the master can send
+a Stop/Restart condition.
+1. To generate the nonacknowledge pulse after the last received data byte, the ACK bit
+must be cleared just after reading the second last data byte (after second last RxNE
+event).
+2. In order to generate the Stop/Restart condition, software must set the STOP/START bit
+after reading the second last data byte (after the second last RxNE event).
+
+*/
+void I2C_receiveString(I2C_TypeDef* i2cPort, uint8_t txAdress, volatile uint8_t* rxMsg, uint8_t rxLen){
+	// Start
+	_I2C_sendStart(i2cPort);
+	// Adress
+	_I2C_sendAddress(i2cPort, txAdress);
+	// Data
+	for(int i = 0; i < rxLen; i++){
+		rxMsg[i] = _I2C_readByte(i2cPort);
+		
+		// Setup NACK at the second last Byte
+		if(i == rxLen - 2){
+			i2cPort->CR1 &= ~I2C_CR1_ACK;
+			i2cPort->CR1 |= I2C_CR1_STOP;
+		}
+	}
+}
+
+/*
+In case a single byte has to be received, the Acknowledge disable is made during EV6
+(before ADDR flag is cleared) and the STOP condition generation is made after EV6.
+EV6: ADDR = 1
+*/
+uint8_t I2C_receiveByte(I2C_TypeDef* i2cPort, uint8_t txAdress){
+	// Start
+	_I2C_sendStart(i2cPort);
+	
+	// Send Adress
+	i2cPort->DR = txAdress; 	
+	while(!(i2cPort->SR1 & I2C_SR1_ADDR));  // Wait for ACK from Slave TX
+	
+	// Setup NACK
+	i2cPort->CR1 &= ~I2C_CR1_ACK;
+	
+	// Clear ADDR bit by reading SR1 and SR2	
+	uint8_t clear = i2cPort->SR1 | i2cPort->SR2; 	
+
+	// Set STOP condition
+	i2cPort->CR1 |= I2C_CR1_STOP;
+	
+	// Read and return 1 received Byte
+	uint8_t rxByte = i2cPort->DR; // This read DR will clear the RxNE bit
+	return rxByte;
+}
+
 void _I2C_sendStart(I2C_TypeDef* i2cPort){
 	// Send Startbit
 	i2cPort->CR1 |= I2C_CR1_START;
 	// Wait until Startbit is sent
-	while(!(i2cPort->SR1 & I2C_SR1_SB));
+	while(!(i2cPort->SR1 & I2C_SR1_SB)); // SB will be cleared by writing into DR
 }
 
 void _I2C_sendAddress(I2C_TypeDef* i2cPort, uint8_t Address){
@@ -151,6 +210,14 @@ void _I2C_sendMultipleByte(I2C_TypeDef* i2cPort, uint8_t* txMsg, uint8_t txLen){
 		i2cPort->DR = txMsg[i]; 					
 	}
 	while(!(i2cPort->SR1 & I2C_SR1_BTF));
+}
+
+uint8_t _I2C_readByte(I2C_TypeDef* i2cPort){
+	uint8_t rxByte = 0;
+	i2cPort->CR1 |= I2C_CR1_ACK;
+	
+	rxByte = i2cPort->DR; // This read DR will clear the RxNE bit
+	return rxByte;
 }
 
 
