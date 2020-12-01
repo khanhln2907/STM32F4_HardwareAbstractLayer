@@ -10,7 +10,7 @@
 int I2C_Config(I2C_TypeDef* i2cPort);
 void I2C_transmit(I2C_TypeDef* i2cPort, uint8_t rxAdress, const uint8_t* txMsg, uint8_t txLen);
 void I2C_receiveString(I2C_TypeDef* i2cPort, uint8_t txAdress, volatile uint8_t* rxMsg, uint8_t rxLen);
-uint8_t I2C_receiveByte(I2C_TypeDef* i2cPort, uint8_t txAdress);
+uint8_t I2C_receiveByte(I2C_TypeDef* i2cPort);
 
 
 

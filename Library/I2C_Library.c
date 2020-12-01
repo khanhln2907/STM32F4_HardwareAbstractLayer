@@ -152,14 +152,8 @@ In case a single byte has to be received, the Acknowledge disable is made during
 (before ADDR flag is cleared) and the STOP condition generation is made after EV6.
 EV6: ADDR = 1
 */
-uint8_t I2C_receiveByte(I2C_TypeDef* i2cPort, uint8_t txAdress){
-	// Start
-	_I2C_sendStart(i2cPort);
-	
-	// Send Adress
-	i2cPort->DR = txAdress; 	
-	while(!(i2cPort->SR1 & I2C_SR1_ADDR));  // Wait for ACK from Slave TX
-	
+uint8_t I2C_receiveByte(I2C_TypeDef* i2cPort){
+	// Executing before reading the last data byte
 	// Setup NACK
 	i2cPort->CR1 &= ~I2C_CR1_ACK;
 	

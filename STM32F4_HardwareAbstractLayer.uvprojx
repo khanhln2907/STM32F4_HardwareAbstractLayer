@@ -407,6 +407,11 @@
               <FileType>5</FileType>
               <FilePath>.\Library\ADC_Library.h</FilePath>
             </File>
+            <File>
+              <FileName>SPI_Library.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\SPI_Library.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -436,6 +441,11 @@
               <FileName>ADC_Library.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Library\ADC_Library.c</FilePath>
+            </File>
+            <File>
+              <FileName>SPI_Library.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\SPI_Library.c</FilePath>
             </File>
           </Files>
         </Group>

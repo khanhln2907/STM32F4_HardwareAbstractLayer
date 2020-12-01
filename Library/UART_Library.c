@@ -1,5 +1,4 @@
 #include "UART_Library.h"
-#include "GPIO_Library.h"
 
 #include <assert.h>
 
@@ -143,12 +142,12 @@ int UART_begin(USART_TypeDef* uartPort, uint32_t baudRateRegister){
 }
 
 // Write 1 Byte through Serial Port
-void UART_writeByte(USART_TypeDef* uartPort, uint8_t txByte){
+void UART_transmitByte(USART_TypeDef* uartPort, uint8_t txByte){
 		uartPort->DR = txByte;
 		while(!(uartPort->SR & USART_SR_TC));
 }
 
-void UART_writeString(USART_TypeDef* uartPort, char *msg, ...){
+void UART_transmitString(USART_TypeDef* uartPort, char *msg, ...){
 	char txMsg[80];
 	
 	va_list args;
